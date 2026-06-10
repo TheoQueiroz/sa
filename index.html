@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Modo Brócolis</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050505;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      background: #050505;
+      cursor: pointer;
+    }
+
+    .photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #050505;
+      opacity: 0;
+      transform: scale(1.015);
+      transition: opacity 260ms ease, transform 420ms ease, filter 420ms ease;
+      will-change: opacity, transform, filter;
+    }
+
+    .photo.active {
+      opacity: 1;
+      transform: scale(1);
+      filter: saturate(1.02) contrast(1.02);
+    }
+
+    .tap-hint {
+      position: absolute;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: 14px 20px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.52);
+      color: white;
+      font-size: clamp(15px, 4vw, 18px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-align: center;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.28);
+      transition: opacity 220ms ease, transform 220ms ease;
+      white-space: nowrap;
+    }
+
+    .tap-hint.hide {
+      opacity: 0;
+      transform: translateX(-50%) translateY(12px);
+      pointer-events: none;
+    }
+
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(113,255,128,.85), rgba(255,255,255,.58) 22%, transparent 58%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .flash.play {
+      animation: flash 360ms ease-out;
+    }
+
+    @keyframes flash {
+      0% { opacity: 0; transform: scale(.8); }
+      35% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.2); }
+    }
+
+    .shake {
+      animation: shake 260ms ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-8px, 3px); }
+      40% { transform: translate(7px, -4px); }
+      60% { transform: translate(-5px, -2px); }
+      80% { transform: translate(5px, 3px); }
+    }
+
+    .final-text {
+      position: absolute;
+      left: 50%;
+      bottom: calc(34px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      width: min(90vw, 520px);
+      z-index: 12;
+      padding: 18px 20px;
+      border-radius: 24px;
+      background: rgba(0, 0, 0, 0.72);
+      color: white;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.4);
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
+
+    .final-text.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .final-text strong {
+      display: block;
+      font-size: clamp(22px, 6vw, 34px);
+      line-height: 1.05;
+      margin-bottom: 8px;
+    }
+
+    .final-text span {
+      display: block;
+      font-size: 14px;
+      opacity: .78;
+    }
+
+    .broccoli-pop {
+      position: absolute;
+      z-index: 8;
+      font-size: 28px;
+      pointer-events: none;
+      animation: pop 780ms ease-out forwards;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,.25));
+    }
+
+    @keyframes pop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(.2) rotate(0deg); }
+      25% { opacity: 1; }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.5) rotate(var(--r)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app" aria-label="Toque para usar o brócolis">
+    <img class="photo active" src="assets/00-original.jpg" alt="Foto original" />
+    <img class="photo" src="assets/01-dose.png" alt="Nível 1" />
+    <img class="photo" src="assets/02-evolucao.png" alt="Nível 2" />
+    <img class="photo" src="assets/03-transformacao.png" alt="Nível 3" />
+    <img class="photo" src="assets/04-hormonizada.png" alt="Nível 4" />
+    <img class="photo" src="assets/05-muita-bomba.png" alt="Nível 5" />
+    <img class="photo" src="assets/06-explosao.png" alt="Explosão de brócolis" />
+
+    <div class="flash" id="flash"></div>
+    <div class="tap-hint" id="hint">🥦 toque para usar o Brócolis</div>
+
+    <div class="final-text" id="finalText">
+      <strong>Você usou muita bomba e explodiu...</strong>
+      <span>toque para recomeçar 🥦</span>
+    </div>
+  </main>
+
+  <script>
+    const app = document.getElementById("app");
+    const photos = Array.from(document.querySelectorAll(".photo"));
+    const hint = document.getElementById("hint");
+    const flash = document.getElementById("flash");
+    const finalText = document.getElementById("finalText");
+
+    let index = 0;
+    let locked = false;
+
+    photos.forEach(img => {
+      const preload = new Image();
+      preload.src = img.src;
+    });
+
+    function burst(x, y) {
+      for (let i = 0; i < 7; i++) {
+        const b = document.createElement("div");
+        b.className = "broccoli-pop";
+        b.textContent = "🥦";
+        b.style.left = x + "px";
+        b.style.top = y + "px";
+        b.style.setProperty("--x", (Math.random() * 160 - 80) + "px");
+        b.style.setProperty("--y", (Math.random() * -150 - 40) + "px");
+        b.style.setProperty("--r", (Math.random() * 220 - 110) + "deg");
+        b.style.fontSize = (22 + Math.random() * 22) + "px";
+        app.appendChild(b);
+        setTimeout(() => b.remove(), 850);
+      }
+    }
+
+    function showPhoto(nextIndex) {
+      photos[index].classList.remove("active");
+      photos[nextIndex].classList.add("active");
+      index = nextIndex;
+    }
+
+    function tap(e = {}) {
+      if (locked) return;
+      locked = true;
+
+      const point =
+        (e.touches && e.touches.length ? e.touches[0] : null) ||
+        (e.changedTouches && e.changedTouches.length ? e.changedTouches[0] : null) ||
+        (typeof e.clientX === "number" ? e : null);
+
+      const x = point ? point.clientX : window.innerWidth / 2;
+      const y = point ? point.clientY : window.innerHeight / 2;
+
+      if (index === photos.length - 1) {
+        finalText.classList.remove("show");
+        hint.classList.remove("hide");
+        showPhoto(0);
+        setTimeout(() => locked = false, 220);
+        return;
+      }
+
+      hint.classList.add("hide");
+      burst(x, y);
+
+      flash.classList.remove("play");
+      void flash.offsetWidth;
+      flash.classList.add("play");
+
+      app.classList.remove("shake");
+      void app.offsetWidth;
+      app.classList.add("shake");
+
+      setTimeout(() => {
+        showPhoto(index + 1);
+
+        if (index === photos.length - 1) {
+          setTimeout(() => finalText.classList.add("show"), 240);
+        }
+
+        locked = false;
+      }, 170);
+    }
+
+    app.addEventListener("click", tap);
+    app.addEventListener("touchend", tap, { passive: true });
+  </script>
+</body>
+</html>
